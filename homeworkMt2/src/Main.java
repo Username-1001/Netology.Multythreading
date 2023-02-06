@@ -6,6 +6,24 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         List<Thread> threads = new ArrayList<>();
 
+        Thread currentMaxPrinter = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                synchronized (sizeToFreq) {
+                    try {
+                        sizeToFreq.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    int currentMax = sizeToFreq.values().stream().max(Integer::compare).get();
+                    System.out.println("Пока что самое частое количество повторений " +
+                            sizeToFreq.entrySet().stream().filter(o -> o.getValue() == currentMax).map(o -> o.getKey()).findFirst().get());
+                }
+            }
+        });
+
+        currentMaxPrinter.start();
+
         for (int i = 0; i < 1000; i++) {
             threads.add(new Thread(() -> {
                 String route = generateRoute("RLRFR", 100);
@@ -17,7 +35,10 @@ public class Main {
                     } else {
                         sizeToFreq.put(countOfR, 1);
                     }
+
+                    sizeToFreq.notify();
                 }
+
             }));
             threads.get(i).start();
         }
@@ -25,6 +46,8 @@ public class Main {
         for (Thread thread : threads) {
             thread.join();
         }
+
+        currentMaxPrinter.interrupt();
 
         Optional<Integer> maxOtp = sizeToFreq.values().stream().max(Integer::compare);
         int max = maxOtp.get();
@@ -37,7 +60,7 @@ public class Main {
         result.append("Другие размеры:\n");
 
         for (Map.Entry entry : sizeToFreq.entrySet()) {
-            if ((int)entry.getValue() != max) {
+            if ((int) entry.getValue() != max) {
                 result.append("- " + entry.getKey() + "( " + entry.getValue() + " раз)\n");
             }
         }
