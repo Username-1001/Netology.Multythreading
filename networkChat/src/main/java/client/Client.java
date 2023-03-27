@@ -36,7 +36,7 @@ public class Client {
     public void sendMessages() {
         new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
-            while (exit.get()) {
+            while (!exit.get()) {
                 String message = scanner.nextLine();
                 out.println(message);
                 LOGGER.info("Отправка сообщения: " + message);
@@ -53,7 +53,7 @@ public class Client {
     public void receiveMessages() {
         new Thread(() -> {
             try {
-                while (exit.get()) {
+                while (!exit.get()) {
                     String message = in.readLine();
                     System.out.println(message);
                     LOGGER.info(message);
